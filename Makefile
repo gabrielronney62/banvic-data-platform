@@ -8,7 +8,7 @@ TF := terraform -chdir=infra/terraform
 .PHONY: help check versions lint test cluster-up cluster-status tf-init tf-plan tf-apply infra-status destroy
 
 help: ## Lista os targets disponiveis
-	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
+	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
 	  | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
 
 check: ## Valida pre-requisitos e versoes do host
@@ -43,3 +43,20 @@ infra-status: ## Mostra namespace, PV e PVC provisionados
 
 destroy: ## Destroi o cluster Kind por completo
 	@kind delete cluster --name $(KIND_CLUSTER_NAME)
+
+lock-images: ## Resolve tags de imagem para digests imutaveis em versions.lock
+	@bash scripts/lock_images.sh
+
+secrets: ## Cria os Secrets do Kubernetes a partir do .env local
+	@bash scripts/create_secrets.sh
+
+dw-status: ## Mostra o estado do PostgreSQL do Data Warehouse
+	@kubectl get statefulset,pod,svc,pvc -n $(K8S_NAMESPACE) -l app.kubernetes.io/name=banvic-postgres
+
+dw-psql: ## Abre um psql interativo dentro do pod do DW
+	@kubectl exec -it banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
+	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+dw-schemas: ## Lista os schemas do Data Warehouse
+	@kubectl exec banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
+	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "\dn+"'

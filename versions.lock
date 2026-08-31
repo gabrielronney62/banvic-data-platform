@@ -1,0 +1,4 @@
+# Gerado por scripts/lock_images.sh — nao editar a mao.
+# Regenere com: make lock-images
+PG_IMAGE_DIGEST=postgres@sha256:cf78e76683b9ca8c5733cbbdce6c9262b45b6767934dd0a95e671f9a0fc20685
+AIRFLOW_BASE_DIGEST=apache/airflow@sha256:bbe58e3204d550ab98dbf738a42c0e6663c455357ecd0e2d1440ef9cb6a75f00
