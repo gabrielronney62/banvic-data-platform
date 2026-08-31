@@ -74,3 +74,20 @@ db-status: ## Mostra as duas instancias PostgreSQL
 metadata-psql: ## Abre psql no banco de metadados do Airflow
 	@kubectl exec -it airflow-postgres-0 -n $(K8S_NAMESPACE) -- \
 	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+
+meltano-build: ## Constroi a imagem do Meltano e injeta no cluster
+	@docker build \
+	  --build-arg MELTANO_VERSION=$(MELTANO_VERSION) \
+	  -t $(IMAGE_MELTANO):$(IMAGE_TAG) \
+	  -f images/meltano/Dockerfile meltano/
+	@kind load docker-image $(IMAGE_MELTANO):$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
+
+meltano-run: ## Executa a carga standalone CSV -> staging
+	@kubectl delete job meltano-carga-inicial -n $(K8S_NAMESPACE) --ignore-not-found
+	@kubectl apply -f meltano/k8s/job-carga-standalone.yaml
+	@kubectl wait --for=condition=complete --timeout=10m \
+	  job/meltano-carga-inicial -n $(K8S_NAMESPACE)
+
+staging-counts: ## Conta os registros das sete tabelas em staging
+	@kubectl exec -i banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
+	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' < sql/quality/staging_counts.sql

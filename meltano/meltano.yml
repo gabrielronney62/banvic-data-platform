@@ -1,0 +1,52 @@
+requires_meltano: ">=4.2.2"
+default_environment: prod
+project_id: banvic-data-platform
+
+environments:
+  - name: prod
+
+plugins:
+  extractors:
+    - name: tap-csv
+      variant: meltanolabs
+      # Nao existe no PyPI. Pin obrigatorio por tag Git.
+      pip_url: git+https://github.com/MeltanoLabs/tap-csv.git@v1.3.2
+      config:
+        # Adiciona _sdc_source_file, _sdc_source_file_mtime e _sdc_source_lineno.
+        # Atende diretamente ao requisito de _source_file da secao 9.
+        add_metadata_columns: true
+        files:
+          - entity: agencias
+            path: /opt/banvic/incoming/agencias.csv
+            keys: [cod_agencia]
+          - entity: clientes
+            path: /opt/banvic/incoming/clientes.csv
+            keys: [cod_cliente]
+          - entity: colaborador_agencia
+            path: /opt/banvic/incoming/colaborador_agencia.csv
+            keys: [cod_colaborador, cod_agencia]
+          - entity: colaboradores
+            path: /opt/banvic/incoming/colaboradores.csv
+            keys: [cod_colaborador]
+          - entity: contas
+            path: /opt/banvic/incoming/contas.csv
+            keys: [num_conta]
+          - entity: propostas_credito
+            path: /opt/banvic/incoming/propostas_credito.csv
+            keys: [cod_proposta]
+          - entity: transacoes
+            path: /opt/banvic/incoming/transacoes.csv
+            keys: [cod_transacao]
+
+  loaders:
+    - name: target-postgres
+      variant: meltanolabs
+      pip_url: meltanolabs-target-postgres==0.8.0
+      config:
+        # host, port, user, password e database vem de variaveis de ambiente
+        # injetadas pelo Secret. Nada de credencial neste arquivo.
+        default_target_schema: staging
+        # Substitui o conteudo a cada execucao: o CSV e um snapshot do ERP,
+        # nao um incremento. Base da idempotencia exigida na secao 12.
+        load_method: overwrite
+        add_record_metadata: true
