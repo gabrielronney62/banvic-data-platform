@@ -39,3 +39,26 @@ variable "sources_capacity" {
   type        = string
   default     = "1Gi"
 }
+
+variable "pg_image" {
+  description = "Imagem do PostgreSQL do DW, referenciada por digest imutavel."
+  type        = string
+}
+
+variable "dw_secret_name" {
+  description = "Nome do Secret criado por scripts/create_secrets.sh."
+  type        = string
+  default     = "banvic-dw-credentials"
+}
+
+variable "dw_storage_size" {
+  description = "Tamanho do volume de dados do PostgreSQL."
+  type        = string
+  default     = "2Gi"
+}
+
+variable "dw_nodeport" {
+  description = "NodePort do PostgreSQL. Mapeado para 15432 no host pelo cluster.yaml."
+  type        = number
+  default     = 30432
+}

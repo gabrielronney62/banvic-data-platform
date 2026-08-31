@@ -17,3 +17,18 @@ output "sources_node_path" {
   description = "Caminho das fontes dentro do no do Kind."
   value       = var.sources_node_path
 }
+
+output "dw_service_dns" {
+  description = "DNS interno do PostgreSQL do DW, usado pelos pods."
+  value       = "${kubernetes_service.postgres.metadata[0].name}.${kubernetes_namespace.banvic.metadata[0].name}.svc.cluster.local"
+}
+
+output "dw_host_port" {
+  description = "Porta no host Windows para clientes externos como DBeaver."
+  value       = 15432
+}
+
+output "dw_image" {
+  description = "Imagem do PostgreSQL efetivamente aplicada."
+  value       = var.pg_image
+}
