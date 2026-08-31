@@ -1,0 +1,46 @@
+# Execucao standalone do Meltano, fora do Airflow.
+#
+# Serve para depurar a ingestao sem depender da DAG. No Lab 7 esta mesma
+# configuracao vira um KubernetesPodOperator dentro do pipeline.
+#
+# A imagem precisa estar no no antes de aplicar:
+#   docker build -t banvic-meltano:0.1.0 -f images/meltano/Dockerfile meltano/
+#   kind load docker-image banvic-meltano:0.1.0 --name banvic
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: meltano-carga-inicial
+  namespace: banvic
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: meltano
+          image: banvic-meltano:0.1.0
+          imagePullPolicy: Never
+          args: ["run", "tap-csv", "target-postgres"]
+          env:
+            - name: TARGET_POSTGRES_HOST
+              value: banvic-postgres.banvic.svc.cluster.local
+            - name: TARGET_POSTGRES_PORT
+              value: "5432"
+            - name: TARGET_POSTGRES_DATABASE
+              valueFrom:
+                secretKeyRef: { name: banvic-dw-credentials, key: POSTGRES_DB }
+            - name: TARGET_POSTGRES_USER
+              valueFrom:
+                secretKeyRef: { name: banvic-dw-credentials, key: POSTGRES_USER }
+            - name: TARGET_POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef: { name: banvic-dw-credentials, key: POSTGRES_PASSWORD }
+          volumeMounts:
+            - name: fontes
+              mountPath: /opt/banvic/incoming
+              readOnly: true
+      volumes:
+        - name: fontes
+          persistentVolumeClaim:
+            claimName: banvic-sources-pvc
+            readOnly: true
