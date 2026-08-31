@@ -62,3 +62,27 @@ variable "dw_nodeport" {
   type        = number
   default     = 30432
 }
+
+variable "metadata_secret_name" {
+  description = "Secret do banco de metadados do Airflow."
+  type        = string
+  default     = "airflow-metadata-credentials"
+}
+
+variable "metadata_storage_size" {
+  description = "Tamanho do volume do banco de metadados."
+  type        = string
+  default     = "1Gi"
+}
+
+variable "dags_node_path" {
+  description = "Caminho das DAGs dentro do no do Kind, exposto por extraMounts."
+  type        = string
+  default     = "/data/dags"
+}
+
+variable "dags_storage_class" {
+  description = "StorageClass dedicada das DAGs. Bind estatico, sem provisionador."
+  type        = string
+  default     = "banvic-dags"
+}
