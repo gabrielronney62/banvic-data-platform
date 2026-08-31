@@ -7,14 +7,22 @@ nodes:
     image: kindest/node:v1.34.8@sha256:02722c2dedddcfc00febf5d27fbeb9b7b2c14294c82109ff4a85d89ac9ba3256
 
     extraMounts:
+      # Fontes CSV: imutaveis, somente leitura.
       - hostPath: /home/gabrielrsilva/projetos/banvic-data-platform/data/incoming
         containerPath: /data/incoming
         readOnly: true
 
+      # DAGs: leitura e escrita, porque o dag-processor grava __pycache__.
+      - hostPath: /home/gabrielrsilva/projetos/banvic-data-platform/airflow/dags
+        containerPath: /data/dags
+        readOnly: false
+
     extraPortMappings:
+      # Airflow UI
       - containerPort: 30080
         hostPort: 8080
         protocol: TCP
+      # PostgreSQL do Data Warehouse
       - containerPort: 30432
         hostPort: 15432
         protocol: TCP

@@ -60,3 +60,17 @@ dw-psql: ## Abre um psql interativo dentro do pod do DW
 dw-schemas: ## Lista os schemas do Data Warehouse
 	@kubectl exec banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
 	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "\dn+"'
+
+bootstrap: ## Sobe tudo do zero: cluster, namespace, secrets e infraestrutura
+	@$(MAKE) cluster-up
+	@$(MAKE) tf-init
+	@$(TF) apply -target=kubernetes_namespace.$(K8S_NAMESPACE) -auto-approve
+	@$(MAKE) secrets
+	@$(MAKE) tf-apply
+
+db-status: ## Mostra as duas instancias PostgreSQL
+	@kubectl get statefulset,pod,svc -n $(K8S_NAMESPACE) -l app.kubernetes.io/part-of=banvic-data-platform
+
+metadata-psql: ## Abre psql no banco de metadados do Airflow
+	@kubectl exec -it airflow-postgres-0 -n $(K8S_NAMESPACE) -- \
+	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
