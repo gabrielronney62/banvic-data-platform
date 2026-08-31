@@ -91,6 +91,16 @@ config:
 # Calibrado para ~9.7 GiB disponiveis no Docker Desktop.
 apiServer:
   replicas: 1
+  # NodePort 30080 casa com o extraPortMappings do cluster.yaml, que o
+  # publica em localhost:8080 no Windows. Evita depender de port-forward,
+  # que e um tunel temporario preso a um terminal aberto.
+  service:
+    type: NodePort
+    ports:
+      - name: api-server
+        port: 8080
+        targetPort: api-server
+        nodePort: 30080
   resources:
     requests:
       cpu: 100m
