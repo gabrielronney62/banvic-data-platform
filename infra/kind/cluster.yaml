@@ -17,12 +17,17 @@ nodes:
         containerPath: /data/dags
         readOnly: false
 
+      # Logs: RWX entre os quatro componentes e os pods efemeros de task.
+      # O provisionador local-path do Kind so suporta RWO, entao usamos
+      # PV estatico via hostPath. Bonus: logs legiveis direto no host.
+      - hostPath: /home/gabrielrsilva/projetos/banvic-data-platform/airflow/logs
+        containerPath: /data/logs
+        readOnly: false
+
     extraPortMappings:
-      # Airflow UI
       - containerPort: 30080
         hostPort: 8080
         protocol: TCP
-      # PostgreSQL do Data Warehouse
       - containerPort: 30432
         hostPort: 15432
         protocol: TCP

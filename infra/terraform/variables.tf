@@ -86,3 +86,15 @@ variable "dags_storage_class" {
   type        = string
   default     = "banvic-dags"
 }
+
+variable "logs_node_path" {
+  description = "Caminho dos logs do Airflow dentro do no do Kind."
+  type        = string
+  default     = "/data/logs"
+}
+
+variable "logs_storage_class" {
+  description = "StorageClass dedicada dos logs. Bind estatico, sem provisionador."
+  type        = string
+  default     = "banvic-logs"
+}

@@ -1,0 +1,145 @@
+# Airflow 3.2.2 no chart apache-airflow/airflow 1.22.0
+#
+# Principios desta configuracao:
+#   - KubernetesExecutor: uma task = um pod efemero
+#   - banco de metadados EXTERNO, provisionado pelo nosso modulo Terraform
+#   - nenhuma credencial neste arquivo: tudo por Secret
+#   - componentes que a POC nao usa ficam desligados, por memoria e por clareza
+
+executor: KubernetesExecutor
+
+airflowVersion: "3.2.2"
+defaultAirflowRepository: apache/airflow
+defaultAirflowTag: "3.2.2"
+
+fullnameOverride: airflow
+
+# --- Banco de metadados externo -------------------------------------------
+# O subchart embutido usa bitnamilegacy/postgresql e mistura o banco de
+# metadados com a plataforma. Usamos a instancia airflow-postgres do Lab 4.
+postgresql:
+  enabled: false
+
+data:
+  metadataSecretName: airflow-metadata-connection
+
+# --- Componentes nao utilizados -------------------------------------------
+# Redis e broker do CeleryExecutor. Nao usamos Celery.
+redis:
+  enabled: false
+
+# Flower e UI do Celery.
+flower:
+  enabled: false
+
+# StatsD exporta metricas para Prometheus/Grafana, fora do escopo (secao 23).
+statsd:
+  enabled: false
+
+# PgBouncer e pool de conexoes para carga alta. Desnecessario numa POC.
+pgbouncer:
+  enabled: false
+
+# --- DAGs -----------------------------------------------------------------
+# Vem do PVC provisionado no Lab 4, ligado por extraMounts a airflow/dags.
+# Editar um arquivo no Ubuntu reflete no cluster sem rebuild de imagem.
+dags:
+  persistence:
+    enabled: true
+    existingClaim: banvic-dags-pvc
+  gitSync:
+    enabled: false
+
+# --- Logs -----------------------------------------------------------------
+# Pods de task morrem apos executar. Sem volume compartilhado os logs
+# desapareceriam junto, e eles sao evidencia exigida pela secao 23.
+logs:
+  persistence:
+    enabled: true
+    existingClaim: airflow-logs
+
+# --- Volume das fontes CSV ------------------------------------------------
+# Global: aplicado a todos os pods, inclusive aos pods efemeros de task.
+# O FileSensor precisa enxergar os arquivos onde quer que a task caia.
+volumes:
+  - name: banvic-sources
+    persistentVolumeClaim:
+      claimName: banvic-sources-pvc
+      readOnly: true
+
+volumeMounts:
+  - name: banvic-sources
+    mountPath: /opt/banvic/incoming
+    readOnly: true
+
+# --- Conexao com o Data Warehouse -----------------------------------------
+# Injetada como variavel de ambiente a partir do Secret. O Airflow reconhece
+# AIRFLOW_CONN_<ID> e cria a conexao "banvic_dw" sem passar pela UI.
+secret:
+  - envName: AIRFLOW_CONN_BANVIC_DW
+    secretName: banvic-dw-connection
+    secretKey: AIRFLOW_CONN_BANVIC_DW
+
+# --- Configuracao do Airflow ----------------------------------------------
+config:
+  core:
+    load_examples: 'False'
+  logging:
+    logging_level: 'INFO'
+
+# --- Dimensionamento ------------------------------------------------------
+# Calibrado para ~9.7 GiB disponiveis no Docker Desktop.
+apiServer:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+scheduler:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+dagProcessor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+
+triggerer:
+  replicas: 1
+  persistence:
+    enabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 384Mi
+    limits:
+      memory: 768Mi
+
+workers:
+  kubernetes:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 384Mi
+      limits:
+        memory: 1Gi
+
+migrateDatabaseJob:
+  useHelmHooks: false
+  applyCustomEnv: false
+
+createUserJob:
+  useHelmHooks: false
+  applyCustomEnv: false
