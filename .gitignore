@@ -35,3 +35,7 @@ evidence/
 .idea/
 .vscode/
 .DS_Store
+
+# Logs do Airflow gerados em runtime
+airflow/logs/*
+!airflow/logs/.gitkeep

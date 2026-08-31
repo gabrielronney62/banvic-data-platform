@@ -37,3 +37,8 @@ output "dw_image" {
   description = "Imagem PostgreSQL efetivamente aplicada."
   value       = var.pg_image
 }
+
+output "logs_pvc_name" {
+  description = "PVC de logs consumido pelo chart do Airflow."
+  value       = kubernetes_persistent_volume_claim.logs.metadata[0].name
+}
