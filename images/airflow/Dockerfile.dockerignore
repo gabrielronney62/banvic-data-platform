@@ -1,0 +1,6 @@
+# Contexto minimo: nada entra alem do que a imagem precisa.
+# Elimina o risco de um CSV com CPF acabar dentro da imagem.
+*
+!images/airflow/requirements.txt
+!src/banvic
+!src/banvic/**

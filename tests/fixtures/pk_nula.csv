@@ -1,0 +1,3 @@
+cod_agencia,nome,endereco,cidade,uf,data_abertura,tipo_agencia
+,Agencia Sem Codigo,"Rua A, 100",Florianopolis,SC,2015-08-01,Fisica
+2,Agencia Norte,"Av B, 200",Joinville,SC,2016-03-15,Fisica

@@ -1,0 +1,25 @@
+pipeline_version: "9.9.9"
+source_dir: /tmp/fontes
+tables:
+  - table: agencias
+    source_file: ok.csv
+    primary_key: [cod_agencia]
+    expected_rows: 3
+    columns:
+      cod_agencia:   { type: bigint, nullable: false }
+      nome:          { type: text,   nullable: false }
+      endereco:      { type: text,   nullable: false }
+      cidade:        { type: text,   nullable: false }
+      uf:            { type: text,   nullable: false }
+      data_abertura: { type: date,   nullable: false }
+      tipo_agencia:  { type: text,   nullable: false }
+    relationships: []
+  - table: contas
+    source_file: contas.csv
+    primary_key: [num_conta]
+    expected_rows: 999
+    columns:
+      num_conta:   { type: bigint, nullable: false }
+      cod_cliente: { type: bigint, nullable: false }
+    relationships:
+      - { column: cod_cliente, references: clientes.cod_cliente, severity: WARN }
