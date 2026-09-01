@@ -112,3 +112,13 @@ rebuild: ## Reconstroi a plataforma inteira do zero
 	@bash scripts/deploy_airflow.sh
 	@$(MAKE) meltano-build
 	@$(MAKE) verify
+
+ddl: ## Aplica o DDL idempotente de ops e raw
+	@bash scripts/apply_ddl.sh
+
+promote: ## Promove staging -> raw numa transacao atomica
+	@bash scripts/promote.sh
+
+raw-counts: ## Contagem e unicidade de PK das sete tabelas em raw
+	@kubectl exec -i banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
+	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' < sql/quality/raw_counts.sql

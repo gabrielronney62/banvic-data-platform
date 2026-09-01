@@ -1,0 +1,130 @@
+# Contratos declarativos das sete fontes do ERP BanVic.
+#
+# Fonte unica de verdade das validacoes estruturais. O codigo Python le
+# este arquivo; nenhuma regra especifica de tabela deve virar if/else
+# espalhado pelo pipeline (requisito da secao 21).
+#
+# Convencoes de tipo:
+#   text        preservado como veio da origem
+#   bigint      identificadores numericos
+#   integer     quantidades pequenas
+#   numeric     valores monetarios, SEM precisao declarada.
+#               NUMERIC(18,2) arredondaria: a origem traz ate 17 casas
+#               decimais e a camada raw preserva o valor recebido.
+#   date        yyyy-mm-dd
+#   timestamptz yyyy-mm-dd hh:mm:ss[.ffffff] UTC, com ou sem fracao
+
+pipeline_version: "0.1.0"
+source_dir: /opt/banvic/incoming
+
+tables:
+
+  - table: agencias
+    source_file: agencias.csv
+    primary_key: [cod_agencia]
+    expected_rows: 10
+    columns:
+      cod_agencia:   { type: bigint,  nullable: false }
+      nome:          { type: text,    nullable: false }
+      endereco:      { type: text,    nullable: false }
+      cidade:        { type: text,    nullable: false }
+      uf:            { type: text,    nullable: false }
+      data_abertura: { type: date,    nullable: false }
+      tipo_agencia:  { type: text,    nullable: false }
+    relationships: []
+
+  - table: clientes
+    source_file: clientes.csv
+    primary_key: [cod_cliente]
+    expected_rows: 998
+    columns:
+      cod_cliente:     { type: bigint,      nullable: false }
+      primeiro_nome:   { type: text,        nullable: false }
+      ultimo_nome:     { type: text,        nullable: false }
+      email:           { type: text,        nullable: false }
+      tipo_cliente:    { type: text,        nullable: false }
+      data_inclusao:   { type: timestamptz, nullable: false }
+      cpfcnpj:         { type: text,        nullable: false }
+      data_nascimento: { type: date,        nullable: false }
+      endereco:        { type: text,        nullable: false }
+      cep:             { type: text,        nullable: false }
+    relationships: []
+
+  - table: colaborador_agencia
+    source_file: colaborador_agencia.csv
+    primary_key: [cod_colaborador, cod_agencia]
+    expected_rows: 100
+    columns:
+      cod_colaborador: { type: bigint, nullable: false }
+      cod_agencia:     { type: bigint, nullable: false }
+    relationships:
+      - { column: cod_colaborador, references: colaboradores.cod_colaborador, severity: CRITICAL }
+      - { column: cod_agencia,     references: agencias.cod_agencia,          severity: CRITICAL }
+
+  - table: colaboradores
+    source_file: colaboradores.csv
+    primary_key: [cod_colaborador]
+    expected_rows: 100
+    columns:
+      cod_colaborador: { type: bigint, nullable: false }
+      primeiro_nome:   { type: text,   nullable: false }
+      ultimo_nome:     { type: text,   nullable: false }
+      email:           { type: text,   nullable: false }
+      cpf:             { type: text,   nullable: false }
+      data_nascimento: { type: date,   nullable: false }
+      endereco:        { type: text,   nullable: false }
+      cep:             { type: text,   nullable: false }
+    relationships: []
+
+  - table: contas
+    source_file: contas.csv
+    primary_key: [num_conta]
+    expected_rows: 999
+    columns:
+      num_conta:              { type: bigint,      nullable: false }
+      cod_cliente:            { type: bigint,      nullable: false }
+      cod_agencia:            { type: bigint,      nullable: false }
+      cod_colaborador:        { type: bigint,      nullable: false }
+      tipo_conta:             { type: text,        nullable: false }
+      data_abertura:          { type: timestamptz, nullable: false }
+      saldo_total:            { type: numeric,     nullable: false }
+      saldo_disponivel:       { type: numeric,     nullable: false }
+      data_ultimo_lancamento: { type: timestamptz, nullable: false }
+    relationships:
+      - { column: cod_cliente,     references: clientes.cod_cliente,          severity: WARN }
+      - { column: cod_agencia,     references: agencias.cod_agencia,          severity: CRITICAL }
+      - { column: cod_colaborador, references: colaboradores.cod_colaborador, severity: CRITICAL }
+
+  - table: propostas_credito
+    source_file: propostas_credito.csv
+    primary_key: [cod_proposta]
+    expected_rows: 2000
+    columns:
+      cod_proposta:          { type: bigint,      nullable: false }
+      cod_cliente:           { type: bigint,      nullable: false }
+      cod_colaborador:       { type: bigint,      nullable: false }
+      data_entrada_proposta: { type: timestamptz, nullable: false }
+      taxa_juros_mensal:     { type: numeric,     nullable: false }
+      valor_proposta:        { type: numeric,     nullable: false }
+      valor_financiamento:   { type: numeric,     nullable: false }
+      valor_entrada:         { type: numeric,     nullable: false }
+      valor_prestacao:       { type: numeric,     nullable: false }
+      quantidade_parcelas:   { type: integer,     nullable: false }
+      carencia:              { type: integer,     nullable: false }
+      status_proposta:       { type: text,        nullable: false }
+    relationships:
+      - { column: cod_cliente,     references: clientes.cod_cliente,          severity: WARN }
+      - { column: cod_colaborador, references: colaboradores.cod_colaborador, severity: CRITICAL }
+
+  - table: transacoes
+    source_file: transacoes.csv
+    primary_key: [cod_transacao]
+    expected_rows: 71999
+    columns:
+      cod_transacao:   { type: bigint,      nullable: false }
+      num_conta:       { type: bigint,      nullable: false }
+      data_transacao:  { type: timestamptz, nullable: false }
+      nome_transacao:  { type: text,        nullable: false }
+      valor_transacao: { type: numeric,     nullable: false }
+    relationships:
+      - { column: num_conta, references: contas.num_conta, severity: CRITICAL }
