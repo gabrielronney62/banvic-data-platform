@@ -1,11 +1,3 @@
-# Execucao standalone do Meltano, fora do Airflow.
-#
-# Serve para depurar a ingestao sem depender da DAG. No Lab 7 esta mesma
-# configuracao vira um KubernetesPodOperator dentro do pipeline.
-#
-# A imagem precisa estar no no antes de aplicar:
-#   docker build -t banvic-meltano:0.1.0 -f images/meltano/Dockerfile meltano/
-#   kind load docker-image banvic-meltano:0.1.0 --name banvic
 apiVersion: batch/v1
 kind: Job
 metadata:
