@@ -109,6 +109,8 @@ rebuild: ## Reconstroi a plataforma inteira do zero
 	@$(TF) apply -target=kubernetes_namespace.banvic -auto-approve
 	@bash scripts/create_secrets.sh
 	@$(TF) apply -auto-approve
+	@$(MAKE) airflow-build
+	@$(MAKE) airflow-build
 	@bash scripts/deploy_airflow.sh
 	@$(MAKE) meltano-build
 	@$(MAKE) verify
@@ -122,3 +124,18 @@ promote: ## Promove staging -> raw numa transacao atomica
 raw-counts: ## Contagem e unicidade de PK das sete tabelas em raw
 	@kubectl exec -i banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
 	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' < sql/quality/raw_counts.sql
+
+setup-dev: ## Cria o .venv e instala as dependencias de desenvolvimento
+	@bash scripts/setup_dev.sh
+
+test: ## Roda os testes unitarios do pacote banvic
+	@.venv/bin/python -m pytest tests/unit -v
+
+airflow-build: ## Constroi a imagem banvic-airflow e injeta no cluster
+	@docker build \
+	  --build-arg AIRFLOW_VERSION=$(AIRFLOW_VERSION) \
+	  --build-arg PYTHON_VERSION=$(PYTHON_VERSION) \
+	  --build-arg AIRFLOW_CONSTRAINTS_URL=$(AIRFLOW_CONSTRAINTS_URL) \
+	  -t $(IMAGE_AIRFLOW):$(IMAGE_TAG) \
+	  -f images/airflow/Dockerfile .
+	@kind load docker-image $(IMAGE_AIRFLOW):$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)

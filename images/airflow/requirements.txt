@@ -1,0 +1,10 @@
+# Dependencias adicionais da imagem banvic-airflow.
+#
+# As versoes NAO sao fixadas aqui de proposito: o build usa o arquivo de
+# constraints oficial do Airflow 3.2.2 (AIRFLOW_CONSTRAINTS_URL em
+# versions.env), que pina de forma coerente todos os providers e suas
+# dependencias transitivas. Fixar versoes aqui brigaria com o constraints.
+apache-airflow-providers-postgres
+apache-airflow-providers-cncf-kubernetes
+apache-airflow-providers-standard
+PyYAML

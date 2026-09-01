@@ -9,8 +9,16 @@
 executor: KubernetesExecutor
 
 airflowVersion: "3.2.2"
-defaultAirflowRepository: apache/airflow
-defaultAirflowTag: "3.2.2"
+# Imagem propria: carrega o pacote banvic e os providers necessarios.
+# Injetada no no por `kind load`, entao pullPolicy Never.
+defaultAirflowRepository: banvic-airflow
+defaultAirflowTag: "0.1.0"
+
+images:
+  airflow:
+    repository: banvic-airflow
+    tag: "0.1.0"
+    pullPolicy: Never
 
 fullnameOverride: airflow
 
