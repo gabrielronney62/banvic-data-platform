@@ -4,7 +4,6 @@ FROM meltano/meltano:v${MELTANO_VERSION}-python3.12
 
 # A imagem oficial roda como root e nao traz usuario dedicado.
 # Criamos um para atender ao requisito de nao-root da secao 19.
-# UID 1000 e o primeiro nao-privilegiado, livre nesta base.
 ARG APP_UID=1000
 ARG APP_GID=1000
 
@@ -20,11 +19,10 @@ COPY meltano.yml /project/meltano.yml
 RUN meltano install --clean \
  && meltano --version
 
-# Ponto de montagem das fontes. Criado no build para que uma falha de
-# volume apareca como diretorio vazio, e nao como caminho inexistente.
+# Ponto de montagem das fontes.
 RUN mkdir -p /opt/banvic/incoming
 
-# O Meltano escreve em .meltano/ e em logs durante a execucao.
+# O Meltano escreve em .meltano/ durante a execucao.
 RUN chown -R ${APP_UID}:${APP_GID} /project /opt/banvic
 
 USER meltano

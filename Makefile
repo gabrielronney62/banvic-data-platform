@@ -91,3 +91,24 @@ meltano-run: ## Executa a carga standalone CSV -> staging
 staging-counts: ## Conta os registros das sete tabelas em staging
 	@kubectl exec -i banvic-postgres-0 -n $(K8S_NAMESPACE) -- \
 	  sh -c 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -f -' < sql/quality/staging_counts.sql
+
+test-idempotency: ## Executa a carga duas vezes e compara as contagens
+	@bash scripts/test_idempotency.sh
+
+verify: ## Verifica se a plataforma esta operacional (rode apos reboot)
+	@bash scripts/verify.sh
+
+rebuild: ## Reconstroi a plataforma inteira do zero
+	@kind delete cluster --name $(KIND_CLUSTER_NAME) 2>/dev/null || true
+	@rm -f infra/terraform/terraform.tfstate infra/terraform/terraform.tfstate.backup
+	@kind create cluster --config infra/kind/cluster.yaml
+	@test $$(docker exec banvic-control-plane ls -1 /data/incoming | wc -l) -eq 7 \
+	  || (echo "ERRO: extraMounts nao montou os 7 CSVs. Abortando." && exit 1)
+	@echo "Ponte de dados validada: 7 CSVs no no."
+	@$(TF) init
+	@$(TF) apply -target=kubernetes_namespace.banvic -auto-approve
+	@bash scripts/create_secrets.sh
+	@$(TF) apply -auto-approve
+	@bash scripts/deploy_airflow.sh
+	@$(MAKE) meltano-build
+	@$(MAKE) verify
