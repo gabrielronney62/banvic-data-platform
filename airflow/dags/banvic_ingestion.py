@@ -37,7 +37,7 @@ import pendulum
 from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 from airflow.providers.standard.sensors.filesystem import FileSensor
-from airflow.sdk import Variable, dag, task, task_group
+from airflow.sdk import dag, task, task_group
 from kubernetes.client import models as k8s
 
 from banvic.audit import audit_file

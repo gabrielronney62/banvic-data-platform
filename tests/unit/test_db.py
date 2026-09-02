@@ -203,11 +203,7 @@ def test_severidade_vem_do_contrato_nao_do_codigo(contratos):
 
 
 def test_sql_de_promocao_so_tem_marcadores_conhecidos():
-    """O psycopg2 varre a string inteira, inclusive comentarios.
-
-    Um `%(algo)s` escrito num comentario vira parametro esperado e quebra a
-    execucao com KeyError. Este teste impede a recorrencia.
-    """
+    """O psycopg2 varre a string inteira, inclusive comentarios."""
     import re
 
     sql = (Path(__file__).parent.parent.parent
@@ -217,12 +213,7 @@ def test_sql_de_promocao_so_tem_marcadores_conhecidos():
 
 
 def test_metrics_preserva_checksum_quando_reescrita():
-    """Etapas posteriores reescrevem a linha sem recalcular o checksum.
-
-    audit_sources grava o SHA-256; validate_staging e validate_raw so
-    acrescentam contagens. O UPSERT nao pode apagar o checksum com a string
-    vazia que essas etapas enviam.
-    """
+    """Etapas posteriores reescrevem a linha sem recalcular o checksum."""
     conn = FakeConn()
     record_table_metrics(
         conn, "run_1",
