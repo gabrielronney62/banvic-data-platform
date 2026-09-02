@@ -70,6 +70,7 @@ def audit_file(path: Path | str) -> FileAudit:
 
     Raises:
         AuditError: se o arquivo nao existir.
+
     """
     file_path = Path(path)
 
