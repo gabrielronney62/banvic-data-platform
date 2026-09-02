@@ -139,3 +139,16 @@ airflow-build: ## Constroi a imagem banvic-airflow e injeta no cluster
 	  -t $(IMAGE_AIRFLOW):$(IMAGE_TAG) \
 	  -f images/airflow/Dockerfile .
 	@kind load docker-image $(IMAGE_AIRFLOW):$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
+
+test-integration: ## Testes de integracao contra o DW (exige cluster de pe)
+	@.venv/bin/python -m pytest tests/integration -v -m integration
+
+test-failure: ## Demonstra falha controlada preservando a camada raw
+	@.venv/bin/python scripts/test_failure.py
+
+test-all: ## Roda lint, unitarios, integracao, idempotencia e falha controlada
+	@$(MAKE) lint
+	@$(MAKE) test
+	@$(MAKE) test-integration
+	@$(MAKE) test-idempotency
+	@$(MAKE) test-failure
