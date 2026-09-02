@@ -1,24 +1,24 @@
 -- Promocao atomica de staging para raw (secoes 12 e 13).
 --
 -- Todo o conteudo das sete tabelas raw e substituido dentro de UMA
--- transacao. Se qualquer INSERT falhar, o ROLLBACK preserva a versao
+-- transacao. Se qualquer cast falhar, o ROLLBACK preserva a versao
 -- anterior da raw intacta.
 --
 -- Os casts acontecem aqui, e nao no Meltano. O tap-csv emite tudo como
 -- string, staging espelha o arquivo, e a conversao fica em SQL versionado
--- e auditavel. Um valor invalido faz esta transacao falhar, sem destruir
--- a raw valida que ja existia.
+-- e auditavel. Um valor invalido faz esta transacao falhar sem destruir a
+-- raw valida que ja existia.
 --
--- Parametros esperados via psql -v:
---   run_id            identificador da execucao do Airflow
+-- Parametros nomeados no formato pyformat. O psycopg2 varre a string
+-- inteira procurando marcadores, inclusive dentro de comentarios, entao
+-- este arquivo nao pode conter nenhum outro marcador alem de:
+--   run_id            identificador da execucao
 --   pipeline_version  versao do pipeline
 --
--- Uso:
---   psql -v ON_ERROR_STOP=1 -v run_id=... -v pipeline_version=... -f promote_raw.sql
-
-\set ON_ERROR_STOP on
-
-BEGIN;
+-- BEGIN/COMMIT NAO aparecem aqui de proposito: quem executa (a DAG via
+-- PostgresHook, ou scripts/promote.py) controla a transacao. Deixar o
+-- controle no chamador evita transacao aninhada e mantem um unico arquivo
+-- SQL servindo aos dois caminhos.
 
 -- ---------------------------------------------------------------- agencias
 TRUNCATE TABLE raw.agencias;
@@ -36,8 +36,8 @@ SELECT
     tipo_agencia,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.agencias;
 
 -- ---------------------------------------------------------------- clientes
@@ -60,8 +60,8 @@ SELECT
     cep,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.clientes;
 
 -- ------------------------------------------------------- colaborador_agencia
@@ -75,8 +75,8 @@ SELECT
     cod_agencia::bigint,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.colaborador_agencia;
 
 -- ----------------------------------------------------------- colaboradores
@@ -97,8 +97,8 @@ SELECT
     cep,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.colaboradores;
 
 -- ------------------------------------------------------------------ contas
@@ -120,8 +120,8 @@ SELECT
     data_ultimo_lancamento::timestamptz,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.contas;
 
 -- ------------------------------------------------------- propostas_credito
@@ -147,8 +147,8 @@ SELECT
     status_proposta,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.propostas_credito;
 
 -- -------------------------------------------------------------- transacoes
@@ -165,8 +165,6 @@ SELECT
     valor_transacao::numeric,
     _sdc_source_file,
     _sdc_source_lineno,
-    :'run_id',
-    :'pipeline_version'
+    %(run_id)s,
+    %(pipeline_version)s
 FROM staging.transacoes;
-
-COMMIT;

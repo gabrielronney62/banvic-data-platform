@@ -152,3 +152,6 @@ test-all: ## Roda lint, unitarios, integracao, idempotencia e falha controlada
 	@$(MAKE) test-integration
 	@$(MAKE) test-idempotency
 	@$(MAKE) test-failure
+
+lint: ## Roda o ruff em src, scripts, tests e dags
+	@.venv/bin/ruff check src scripts tests airflow/dags
