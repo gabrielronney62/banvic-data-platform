@@ -89,6 +89,13 @@ secret:
     secretKey: AIRFLOW_CONN_BANVIC_DW
 
 # --- Configuracao do Airflow ----------------------------------------------
+# O Airflow 3 nao cria conexoes padrao. O FileSensor usa fs_default, entao
+# ela e declarada aqui como variavel de ambiente (AIRFLOW_CONN_<ID>).
+# Nao ha credencial envolvida: e apenas um caminho no filesystem.
+env:
+  - name: AIRFLOW_CONN_FS_DEFAULT
+    value: '{"conn_type": "fs", "extra": {"path": "/"}}'
+
 config:
   core:
     load_examples: 'False'
@@ -161,3 +168,12 @@ migrateDatabaseJob:
 createUserJob:
   useHelmHooks: false
   applyCustomEnv: false
+
+# O dag-processor cria arvore de diretorios dentro do volume de logs para
+# cada arquivo de DAG parseado. Sem fsGroup, o kubelet nao ajusta o grupo
+# do hostPath e o processo (uid 50000) falha com FileNotFoundError ao abrir
+# o arquivo de log, entrando em CrashLoopBackOff.
+securityContexts:
+  pod:
+    runAsUser: 50000
+    fsGroup: 0
