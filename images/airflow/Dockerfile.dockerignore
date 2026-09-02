@@ -1,6 +1,10 @@
 # Contexto minimo: nada entra alem do que a imagem precisa.
-# Elimina o risco de um CSV com CPF acabar dentro da imagem.
+# Elimina o risco de um CSV com dado pessoal acabar dentro da imagem.
 *
 !images/airflow/requirements.txt
 !src/banvic
 !src/banvic/**
+!airflow/include/contracts
+!airflow/include/contracts/**
+!sql/promotion
+!sql/promotion/promote_raw.sql
