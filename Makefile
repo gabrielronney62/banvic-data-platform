@@ -139,3 +139,38 @@ airflow-build: ## Constroi a imagem banvic-airflow e injeta no cluster
 	  -t $(IMAGE_AIRFLOW):$(IMAGE_TAG) \
 	  -f images/airflow/Dockerfile .
 	@kind load docker-image $(IMAGE_AIRFLOW):$(IMAGE_TAG) --name $(KIND_CLUSTER_NAME)
+
+test-integration: ## Testes de integracao contra o DW (exige cluster de pe)
+	@.venv/bin/python -m pytest tests/integration -v -m integration
+
+test-failure: ## Demonstra falha controlada preservando a camada raw
+	@.venv/bin/python scripts/test_failure.py
+
+test-all: ## Roda lint, unitarios, integracao, idempotencia e falha controlada
+	@$(MAKE) lint
+	@$(MAKE) test
+	@$(MAKE) test-integration
+	@$(MAKE) test-idempotency
+	@$(MAKE) test-failure
+
+lint: ## Roda o ruff em src, scripts, tests e dags
+	@.venv/bin/ruff check src scripts tests airflow/dags
+
+airflow-deploy: ## Instala ou atualiza o Airflow via Helm
+	@bash scripts/deploy_airflow.sh
+
+airflow-status: ## Mostra os pods e o release do Airflow
+	@kubectl get pods -n $(K8S_NAMESPACE) -l release=airflow
+	@echo
+	@helm status airflow -n $(K8S_NAMESPACE) | head -6
+
+airflow-ui: ## Mostra a URL da UI do Airflow
+	@echo "Airflow UI: http://localhost:8080"
+	@echo "Credenciais: grep AIRFLOW_ADMIN .env"
+	@kubectl get svc -n $(K8S_NAMESPACE) airflow-api-server
+
+airflow-logs: ## Segue os logs do scheduler
+	@kubectl logs -n $(K8S_NAMESPACE) -l component=scheduler -c scheduler --tail=60 -f
+
+airflow-uninstall: ## Remove o release do Airflow, preservando os bancos
+	@helm uninstall airflow -n $(K8S_NAMESPACE)

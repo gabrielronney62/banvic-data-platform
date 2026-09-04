@@ -183,6 +183,7 @@ def load_contracts(path: Path | str | None = None) -> Contracts:
 
     Raises:
         ContractError: se o arquivo estiver ausente ou malformado.
+
     """
     contracts_path = Path(path) if path else DEFAULT_CONTRACTS_PATH
 

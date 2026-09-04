@@ -67,8 +67,7 @@ apply_secret airflow-admin-credentials \
   --from-literal=password="$AIRFLOW_ADMIN_PASSWORD"
 
 echo
-echo "Secrets no namespace ${NAMESPACE} (valores nunca exibidos):"
-kubectl get secrets -n "$NAMESPACE" \
-  --field-selector type=Opaque \
-  -o custom-columns=NOME:.metadata.name,CHAVES:.data --no-headers 2>/dev/null \
-  | sed 's/map\[/ /; s/\]//' || kubectl get secrets -n "$NAMESPACE"
+echo "Secrets aplicados no namespace ${NAMESPACE} (apenas nomes e contagem):"
+kubectl get secrets -n "$NAMESPACE" --field-selector type=Opaque \
+  -o custom-columns=NOME:.metadata.name,CHAVES:'.data' --no-headers 2>/dev/null \
+  | awk '{n=gsub(/:/,":"); print "  " $1 "  (" n " chave(s))"}'

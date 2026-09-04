@@ -9,6 +9,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
+    "psycopg2-binary>=2.9",
     "pytest>=8.0",
     "pytest-cov>=6.0",
     "ruff>=0.8",
@@ -27,10 +28,11 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "UP", "B", "D"]
-ignore = ["D203", "D213"]
+ignore = ["D203", "D213", "D401"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**" = ["D"]
+"scripts/**" = ["D103"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
